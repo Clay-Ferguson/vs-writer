@@ -61,6 +61,10 @@ To illustrate this mechanism, consider the phenomenon of acoustic resonance. Ima
 <!-- e -->
 ```
 
+## Tips
+
+To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at least in Rendered/Preview Markdown) you can simply change `<!-- p -->` to `<!-- p -- >` for example. Notice all we need to do is add a space before the closing `>` and that has the effect of removing that (making it part of a comment), so that we can toggle any of these sections on and off using this technique.
+
 ## Commands
 
 *   `@writer`: Triggers the AI to process the current block.
