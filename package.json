@@ -1,0 +1,55 @@
+{
+  "name": "vs-writer",
+  "displayName": "VS Writer",
+  "description": "Collaborative AI writing assistant using HTML comment syntax",
+  "version": "0.0.1",
+  "publisher": "Clay-Ferguson",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "vs-writer.writer",
+        "name": "writer",
+        "description": "Collaborative AI Writer that fills in <!-- a --> sections based on <!-- p --> sections.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "fill",
+            "description": "Fill the current AI section based on the preceding paragraph."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "vs-writer.insertTemplate",
+        "title": "Writer: Insert Block Template"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-resources",
+    "copy-resources": "mkdir -p out/prompts && cp src/prompts/*.md out/prompts/",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.0"
+  }
+}

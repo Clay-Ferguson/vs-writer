@@ -1,0 +1,202 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const PARTICIPANT_ID = 'vs-writer.writer';
+
+interface WriterContext {
+    pContent: string;
+    fullBlock: string;
+    range: vscode.Range;
+}
+
+export function activate(context: vscode.ExtensionContext) {
+    console.log('VS Writer is active');
+
+    // 1. Register the Chat Participant
+    const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
+        
+        // Load the system prompt
+        const promptPath = path.join(getExtensionPath(), 'out', 'prompts', 'writer-prompt.md');
+        let systemPrompt = '';
+        try {
+            systemPrompt = fs.readFileSync(promptPath, 'utf-8');
+        } catch (err) {
+            console.error('Error reading prompt file:', err);
+            stream.markdown('Error: Could not load system prompt.');
+            return;
+        }
+
+        // Determine the user content (from chat or editor)
+        let userContent = request.prompt;
+        let editorContext: WriterContext | undefined;
+
+        // If the user didn't type much, or explicitly asked to read the file, check the editor
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            editorContext = findWriterBlock(editor);
+            if (editorContext) {
+                // If we found a block, we append it to the user's prompt (or use it as the prompt)
+                userContent = `${userContent}\n\nHere is the context from the editor:\n${editorContext.pContent}`;
+                stream.markdown(`*Processing block at line ${editorContext.range.start.line + 1}...*\n\n`);
+            }
+        }
+
+        if (!userContent.trim()) {
+            stream.markdown('Please provide a prompt or place your cursor inside a `<!-- p --> ... <!-- e -->` block.');
+            return;
+        }
+
+        // Construct the messages
+        const messages = [
+            vscode.LanguageModelChatMessage.User(systemPrompt),
+            vscode.LanguageModelChatMessage.User(userContent)
+        ];
+
+        // Send to Copilot (using the 'gpt-4' family if available, or default)
+        // Note: 'copilot-gpt-4' is a common model ID, but we should query available models or use the default.
+        // For simplicity in this sample, we'll try to find a suitable model.
+        
+        try {
+            const models = await vscode.lm.selectChatModels({ family: 'gpt-4' });
+            const model = models[0] || (await vscode.lm.selectChatModels({}))[0];
+            
+            if (!model) {
+                stream.markdown('Error: No Language Model available.');
+                return;
+            }
+
+            const chatResponse = await model.sendRequest(messages, {}, token);
+
+            let fullResponse = '';
+            for await (const fragment of chatResponse.text) {
+                fullResponse += fragment;
+                stream.markdown(fragment);
+            }
+
+            // If we have editor context, offer to insert the result
+            if (editorContext) {
+                stream.markdown('\n\n');
+                const button = {
+                    title: 'Insert into Document',
+                    command: 'vs-writer.insertResponse',
+                    arguments: [editorContext.range, fullResponse]
+                };
+                stream.button(button);
+            }
+
+        } catch (err) {
+            if (err instanceof Error) {
+                stream.markdown(`Error: ${err.message}`);
+            }
+        }
+    };
+
+    const writer = vscode.chat.createChatParticipant(PARTICIPANT_ID, handler);
+    writer.iconPath = new vscode.ThemeIcon('pencil');
+    context.subscriptions.push(writer);
+
+    // 2. Register the Insert Command (triggered by the button)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.insertResponse', async (range: vscode.Range, text: string) => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+
+            // We need to find the <!-- a --> tag within the range and insert after it
+            const textDoc = editor.document;
+            const blockText = textDoc.getText(range);
+            
+            // Simple regex to find where to insert
+            // We look for <!-- a --> and insert after it
+            const aTagIndex = blockText.indexOf('<!-- a -->');
+            if (aTagIndex !== -1) {
+                const insertOffset = textDoc.offsetAt(range.start) + aTagIndex + '<!-- a -->'.length;
+                const insertPos = textDoc.positionAt(insertOffset);
+                
+                await editor.edit(editBuilder => {
+                    // Optional: Clear existing content in 'a' section if it exists?
+                    // For now, let's just insert/append.
+                    // Actually, the prompt says "overwrite". 
+                    // Let's try to find if there is content between <a> and <e>
+                    const eTagIndex = blockText.indexOf('<!-- e -->');
+                    if (eTagIndex !== -1 && eTagIndex > aTagIndex) {
+                        const startReplace = insertPos;
+                        const endReplace = textDoc.positionAt(textDoc.offsetAt(range.start) + eTagIndex);
+                        const replaceRange = new vscode.Range(startReplace, endReplace);
+                        editBuilder.replace(replaceRange, '\n' + text + '\n');
+                    } else {
+                        editBuilder.insert(insertPos, '\n' + text + '\n');
+                    }
+                });
+            }
+        })
+    );
+
+    // 3. Register Command to Insert Template
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.insertTemplate', () => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+                const snippet = new vscode.SnippetString(
+                    '<!-- p -->\n$1\n<!-- a -->\n\n<!-- e -->'
+                );
+                editor.insertSnippet(snippet);
+            }
+        })
+    );
+}
+
+function getExtensionPath(): string {
+    // This is a hacky way to get the extension path in development if context is not passed everywhere
+    // But we passed context to activate. 
+    // Actually, we can just use __dirname since we are in 'out'
+    return path.resolve(__dirname, '..'); 
+}
+
+function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
+    const text = editor.document.getText();
+    const cursorOffset = editor.document.offsetAt(editor.selection.active);
+
+    // Regex to find blocks: <!-- p --> ... <!-- e -->
+    // We use [^]*? to match across newlines non-greedily
+    const regex = /<!--\s*p\s*-->([^]*?)<!--\s*e\s*-->/g;
+    
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        const start = match.index;
+        const end = match.index + match[0].length;
+
+        // Check if cursor is inside this block
+        if (cursorOffset >= start && cursorOffset <= end) {
+            const fullBlock = match[0];
+            // Extract p content: from start to <!-- a -->
+            const aTagMatch = /<!--\s*a\s*-->/.exec(fullBlock);
+            if (aTagMatch) {
+                // We want the text AFTER the p tag and BEFORE the a tag
+                // The fullBlock starts with the p tag.
+                // Let's find the end of the p tag.
+                const pTagMatch = /^<!--\s*p\s*-->/.exec(fullBlock);
+                if (pTagMatch) {
+                    const pContent = fullBlock.substring(
+                        pTagMatch[0].length, 
+                        aTagMatch.index
+                    );
+                    
+                    return {
+                        pContent: pContent.trim(),
+                        fullBlock,
+                        range: new vscode.Range(
+                            editor.document.positionAt(start),
+                            editor.document.positionAt(end)
+                        )
+                    };
+                }
+            }
+        }
+    }
+    return undefined;
+}
+
+export function deactivate() {}

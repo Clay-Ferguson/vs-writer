@@ -1,0 +1,515 @@
+{
+  "publisher": "Clay-Ferguson",
+  "name": "timex",
+  "displayName": "Timex",
+  "description": "Timex – markdown hashtag time stream (manage #task/#todo/#note items with dates & priorities)",
+  "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Clay-Ferguson/tasks.git"
+  },
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Timex",
+      "properties": {
+        "timex.newTaskFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to folder where new task files will be created. Leave empty to create in workspace root.",
+          "scope": "application",
+          "order": 10
+        },
+        "timex.primaryHashtag": {
+          "type": "string",
+          "default": "#task",
+          "description": "The primary hashtag used to identify task files. Files containing this hashtag will be considered tasks.",
+          "scope": "application",
+          "order": 20
+        },
+        "timex.hashtags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "#task",
+            "#todo",
+            "#note"
+          ],
+          "description": "List of hashtags that can be used to identify task files.",
+          "scope": "application",
+          "order": 30
+        },
+        "timex.includeGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.md"
+          ],
+          "description": "Glob patterns to include when scanning for task markdown files.",
+          "scope": "application",
+          "order": 90
+        },
+        "timex.excludeGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.vscode/**",
+            "**/out/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.next/**",
+            "**/target/**"
+          ],
+          "description": "Glob patterns to exclude when scanning for task markdown files.",
+          "scope": "application",
+          "order": 100
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "timex.showAllTasks",
+        "title": "All Tasks",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "timex.insertTimestamp",
+        "title": "Insert Date+Time"
+      },
+      {
+        "command": "timex.insertDate",
+        "title": "Insert Date"
+      },
+      {
+        "command": "timex.insertAttachment",
+        "title": "Insert Attachment"
+      },
+      {
+        "command": "timex.insertImageFromClipboard",
+        "title": "Insert Image from Clipboard"
+      },
+      {
+        "command": "timex.selectPrimaryHashtag",
+        "title": "Select Primary Hashtag",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "timex.openFilterPanel",
+        "title": "Open Filter Panel",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "timex.newTask",
+        "title": "New Task",
+        "icon": "$(add)"
+      },
+      {
+        "command": "timex.about",
+        "title": "About Timex...",
+        "icon": "$(info)"
+      },
+      {
+        "command": "timex.openSettings",
+        "title": "Timex Settings",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "timex.addDay",
+        "title": "+Day"
+      },
+      {
+        "command": "timex.addWeek",
+        "title": "+Week"
+      },
+      {
+        "command": "timex.addMonth",
+        "title": "+Month"
+      },
+      {
+        "command": "timex.addYear",
+        "title": "+Year"
+      },
+      {
+        "command": "timex.deleteTask",
+        "title": "Delete",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "timex.revealInExplorer",
+        "title": "Reveal in Explorer",
+        "icon": "$(files)"
+      },
+      {
+        "command": "timex.renameTask",
+        "title": "Rename",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "timex.renumberFiles",
+        "title": "Re-Number Files"
+      },
+      {
+        "command": "timex.insertOrdinalFile",
+        "title": "Insert File"
+      },
+      {
+        "command": "timex.generateMarkdown",
+        "title": "Generate Markdown",
+        "icon": "$(book)"
+      },
+      {
+        "command": "timex.cutByOrdinal",
+        "title": "Cut by Ordinal",
+        "icon": "$(cut)"
+      },
+      {
+        "command": "timex.pasteByOrdinal",
+        "title": "Paste by Ordinal",
+        "icon": "$(paste)"
+      },
+      {
+        "command": "timex.moveOrdinalUp",
+        "title": "Move Up",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "timex.moveOrdinalDown",
+        "title": "Move Down",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "timex.moveFileToFolder",
+        "title": "Move to Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "timex.fixAttachmentLinks",
+        "title": "Fix Attachment Links",
+        "icon": "$(link)"
+      },
+      {
+        "command": "timex.previewFolderAsMarkdown",
+        "title": "Preview Folder as Markdown",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "timex.mergeSentences",
+        "title": "Merge Sentences",
+        "icon": "$(merge)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "timex.mergeSentences",
+        "key": "alt+m",
+        "mac": "alt+m",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "timex.explorerOrdinal",
+        "label": "Timex",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "id": "timex.editorTimestamp",
+        "label": "Timex",
+        "icon": "$(calendar)"
+      }
+    ],
+    "views": {
+      "taskManager": [
+        {
+          "id": "taskExplorer",
+          "name": "Timex",
+          "icon": "$(list-unordered)"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "taskManager",
+          "title": "Timex",
+          "icon": "$(checklist)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "timex.selectPrimaryHashtag",
+          "when": "view == taskExplorer",
+          "group": "navigation@0"
+        },
+        {
+          "command": "timex.openFilterPanel",
+          "when": "view == taskExplorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "timex.newTask",
+          "when": "view == taskExplorer",
+          "group": "navigation@6"
+        },
+        {
+          "command": "timex.openSettings",
+          "when": "view == taskExplorer",
+          "group": "0_settings@1",
+          "icon": "$(gear)"
+        },
+        {
+          "command": "timex.about",
+          "when": "view == taskExplorer",
+          "group": "1_about"
+        }
+      ],
+      "view/context": [
+        {
+          "command": "timex.openSettings",
+          "when": "view == taskExplorer",
+          "group": "0_settings@1",
+          "icon": "$(gear)"
+        },
+        {
+          "command": "timex.about",
+          "when": "view == taskExplorer",
+          "group": "1_about@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "timex.addDay",
+          "when": "view == taskExplorer && viewItem == taskWithTimestamp",
+          "group": "1_dateExtension@1"
+        },
+        {
+          "command": "timex.addWeek",
+          "when": "view == taskExplorer && viewItem == taskWithTimestamp",
+          "group": "1_dateExtension@2"
+        },
+        {
+          "command": "timex.addMonth",
+          "when": "view == taskExplorer && viewItem == taskWithTimestamp",
+          "group": "1_dateExtension@3"
+        },
+        {
+          "command": "timex.addYear",
+          "when": "view == taskExplorer && viewItem == taskWithTimestamp",
+          "group": "1_dateExtension@4"
+        },
+        {
+          "command": "timex.revealInExplorer",
+          "when": "view == taskExplorer",
+          "group": "2_file@1"
+        },
+        {
+          "command": "timex.renameTask",
+          "when": "view == taskExplorer",
+          "group": "2_file@2",
+          "icon": "$(edit)"
+        },
+          {
+          "command": "timex.deleteTask",
+          "when": "view == taskExplorer",
+          "group": "2_file@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "timex.showAllTasks"
+        },
+        {
+          "command": "timex.insertTimestamp"
+        },
+        {
+          "command": "timex.insertDate"
+        },
+        {
+          "command": "timex.insertAttachment"
+        },
+        {
+          "command": "timex.newTask"
+        },
+        {
+          "command": "timex.deleteTask"
+        },
+        {
+          "command": "timex.revealInExplorer"
+        },
+        {
+          "command": "timex.renameTask"
+        },
+        {
+          "command": "timex.renumberFiles"
+        },
+        {
+          "command": "timex.insertOrdinalFile"
+        },
+        {
+          "command": "timex.generateMarkdown"
+        },
+        {
+          "command": "timex.cutByOrdinal"
+        },
+        {
+          "command": "timex.pasteByOrdinal"
+        },
+        {
+          "command": "timex.fixAttachmentLinks"
+        },
+        {
+          "command": "timex.previewFolderAsMarkdown"
+        },
+        {
+          "command": "timex.about"
+        },
+        {
+          "command": "timex.openSettings"
+        },
+        {
+          "command": "timex.mergeSentences"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "timex.editorTimestamp",
+          "group": "z_commands"
+        }
+      ],
+      "timex.editorTimestamp": [
+        {
+          "command": "timex.insertTimestamp",
+          "group": "1_timestamp@1"
+        },
+        {
+          "command": "timex.insertDate",
+          "group": "1_timestamp@2"
+        },
+        {
+          "command": "timex.insertAttachment",
+          "group": "2_attachment@1",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "timex.insertImageFromClipboard",
+          "group": "2_attachment@2",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "timex.mergeSentences",
+          "group": "3_text@1",
+          "when": "editorHasSelection"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "timex.explorerOrdinal",
+          "group": "7_modification",
+          "when": "resourceScheme == 'file'",
+          "icon": "$(list-unordered)"
+        }
+      ],
+      "timex.explorerOrdinal": [
+        {
+          "command": "timex.renumberFiles",
+          "group": "1_main@1",
+          "icon": "$(list-ordered)"
+        },
+        {
+          "command": "timex.insertOrdinalFile",
+          "group": "1_main@2",
+          "when": "resourceFilename =~ /^\\d+_.+/",
+          "icon": "$(add)"
+        },
+        {
+          "command": "timex.generateMarkdown",
+          "group": "1_main@3",
+          "icon": "$(book)"
+        },
+        {
+          "command": "timex.previewFolderAsMarkdown",
+          "group": "1_main@4",
+          "icon": "$(open-preview)"
+        },
+        {
+          "command": "timex.fixAttachmentLinks",
+          "group": "1_main@5",
+          "when": "resourceScheme == 'file'",
+          "icon": "$(link)"
+        },
+        {
+          "command": "timex.cutByOrdinal",
+          "group": "2_clipboard@1",
+          "when": "resourceScheme == 'file'",
+          "icon": "$(cut)"
+        },
+        {
+          "command": "timex.pasteByOrdinal",
+          "group": "2_clipboard@2",
+          "when": "timex.hasOrdinalCutItem && resourceScheme == 'file' && resourceFilename =~ /^\\d+_.+/",
+          "icon": "$(paste)"
+        },
+        {
+          "command": "timex.moveOrdinalUp",
+          "group": "3_move@1",
+          "when": "resourceScheme == 'file' && resourceFilename =~ /^\\d+_.+/",
+          "icon": "$(arrow-up)"
+        },
+        {
+          "command": "timex.moveOrdinalDown",
+          "group": "3_move@2",
+          "when": "resourceScheme == 'file' && resourceFilename =~ /^\\d+_.+/",
+          "icon": "$(arrow-down)"
+        },
+        {
+          "command": "timex.moveFileToFolder",
+          "group": "3_move@3",
+          "when": "resourceScheme == 'file' && resourceFilename =~ /\\.md$/",
+          "icon": "$(new-folder)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-resources",
+    "copy-resources": "mkdir -p out/filter-panel && cp src/filter-panel/*.css src/filter-panel/*.js src/filter-panel/*.html out/filter-panel/ 2>/dev/null || true",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "test:unit": "mocha",
+    "test:all": "yarn test:unit && yarn test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.103.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.32.0",
+    "mocha": "^11.7.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}
