@@ -213,6 +213,131 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('workbench.action.chat.open', { query: '@writer' });
         })
     );
+
+    // 5. Register Commands to Remove Sections
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.removePSections', () => removeSections('P'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.removeASections', () => removeSections('A'))
+    );
+
+    // 6. Register Commands to Hide Sections
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.hidePSections', () => hideSections('P'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.hideASections', () => hideSections('A'))
+    );
+}
+
+async function hideSections(type: 'P' | 'A') {
+    const action = type === 'P' ? 'Hide Human (P)' : 'Hide AI (A)';
+    
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `${action} sections...`,
+        cancellable: false
+    }, async (progress) => {
+        const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
+        let processedCount = 0;
+        
+        for (const file of files) {
+            try {
+                const document = await vscode.workspace.openTextDocument(file);
+                const text = document.getText();
+                let newText = text;
+
+                if (type === 'P') {
+                    // Hide P: <!-- p --> -> <!-- p -- >
+                    // Restore A: <!-- a -- > -> <!-- a -->
+                    newText = newText.replace(/<!--\s*p\s*-->/g, '<!-- p -- >');
+                    newText = newText.replace(/<!--\s*a\s*--\s*>/g, '<!-- a -->');
+                } else {
+                    // Hide A: <!-- a --> -> <!-- a -- >
+                    // Restore P: <!-- p -- > -> <!-- p -->
+                    newText = newText.replace(/<!--\s*a\s*-->/g, '<!-- a -- >');
+                    newText = newText.replace(/<!--\s*p\s*--\s*>/g, '<!-- p -->');
+                }
+
+                if (newText !== text) {
+                    const edit = new vscode.WorkspaceEdit();
+                    const fullRange = new vscode.Range(
+                        document.positionAt(0),
+                        document.positionAt(text.length)
+                    );
+                    edit.replace(file, fullRange, newText);
+                    await vscode.workspace.applyEdit(edit);
+                    await document.save();
+                }
+                processedCount++;
+                progress.report({ message: `${processedCount}/${files.length}` });
+            } catch (e) {
+                console.error(`Failed to process ${file.fsPath}`, e);
+            }
+        }
+    });
+}
+
+async function removeSections(type: 'P' | 'A') {
+    const action = type === 'P' ? 'Human (P)' : 'AI (A)';
+    const keep = type === 'P' ? 'AI (A)' : 'Human (P)';
+    
+    const result = await vscode.window.showErrorMessage(
+        `Are you sure you want to remove all ${action} content? This will keep only the ${keep} content and remove the markers. This cannot be undone.`,
+        { modal: true },
+        'Yes'
+    );
+
+    if (result !== 'Yes') {
+        return;
+    }
+
+    const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
+    
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `Removing ${action} sections...`,
+        cancellable: false
+    }, async (progress) => {
+        let processedCount = 0;
+        for (const file of files) {
+            try {
+                const document = await vscode.workspace.openTextDocument(file);
+                const text = document.getText();
+                
+                // Regex to find blocks: <!-- p --> ... <!-- a --> ... <!-- e -->
+                const regex = /<!--\s*p\s*-->([^]*?)<!--\s*a\s*-->([^]*?)<!--\s*e\s*-->/g;
+                
+                let hasChanges = false;
+                const newText = text.replace(regex, (match, pContent, aContent) => {
+                    hasChanges = true;
+                    if (type === 'P') {
+                        // Remove P, keep A
+                        return aContent; 
+                    } else {
+                        // Remove A, keep P
+                        return pContent;
+                    }
+                });
+
+                if (hasChanges) {
+                    const edit = new vscode.WorkspaceEdit();
+                    const fullRange = new vscode.Range(
+                        document.positionAt(0),
+                        document.positionAt(text.length)
+                    );
+                    edit.replace(file, fullRange, newText);
+                    await vscode.workspace.applyEdit(edit);
+                    await document.save();
+                }
+                processedCount++;
+                progress.report({ message: `${processedCount}/${files.length}` });
+            } catch (e) {
+                console.error(`Failed to process ${file.fsPath}`, e);
+            }
+        }
+    });
 }
 
 function getExtensionPath(): string {

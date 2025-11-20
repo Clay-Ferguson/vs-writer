@@ -194,6 +194,15 @@ To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at
 *   `VS Writer: Insert Block Template`: Inserts a new `p/a/e` block at the cursor position.
 *   `VSWriter - Generate`: (Context Menu) Opens Chat and invokes `@writer` for the current block.
 
+# Project Management (Explorer Context Menu)
+
+VS Writer adds a "VS Writer" submenu to the Explorer context menu, allowing you to manage P-A-E sections across your entire project.
+
+*   **Remove P-Sections**: Recursively removes all Human (P) sections and markers, keeping only the AI (A) content. **(Destructive)**
+*   **Remove A-Sections**: Recursively removes all AI (A) sections and markers, keeping only the Human (P) content. **(Destructive)**
+*   **Hide P-Sections**: Hides all Human (P) sections by modifying the comment tags (e.g., `<!-- p -- >`), effectively commenting them out in the rendered Markdown. It also ensures A sections are visible.
+*   **Hide A-Sections**: Hides all AI (A) sections by modifying the comment tags (e.g., `<!-- a -- >`), effectively commenting them out in the rendered Markdown. It also ensures P sections are visible.
+
 # Requirements
 
 *   Visual Studio Code 1.90.0 or higher.

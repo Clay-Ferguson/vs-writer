@@ -38,6 +38,28 @@
       {
         "command": "vs-writer.generate",
         "title": "VSWriter - Generate"
+      },
+      {
+        "command": "vs-writer.removePSections",
+        "title": "Remove P-Sections"
+      },
+      {
+        "command": "vs-writer.removeASections",
+        "title": "Remove A-Sections"
+      },
+      {
+        "command": "vs-writer.hidePSections",
+        "title": "Hide P-Sections"
+      },
+      {
+        "command": "vs-writer.hideASections",
+        "title": "Hide A-Sections"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "vs-writer.submenu",
+        "label": "VS Writer"
       }
     ],
     "menus": {
@@ -46,6 +68,30 @@
           "command": "vs-writer.generate",
           "group": "1_modification",
           "when": "editorTextFocus"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "vs-writer.submenu",
+          "group": "modification"
+        }
+      ],
+      "vs-writer.submenu": [
+        {
+          "command": "vs-writer.removePSections",
+          "group": "1_remove"
+        },
+        {
+          "command": "vs-writer.removeASections",
+          "group": "1_remove"
+        },
+        {
+          "command": "vs-writer.hidePSections",
+          "group": "2_hide"
+        },
+        {
+          "command": "vs-writer.hideASections",
+          "group": "2_hide"
         }
       ]
     }

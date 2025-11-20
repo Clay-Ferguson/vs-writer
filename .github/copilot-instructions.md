@@ -13,6 +13,10 @@ This document outlines the architecture, workflows, and conventions for the **VS
 -   **Command Handlers**:
     -   `vs-writer.insertResponse`: Inserts the AI's generated text into the `<!-- a -->` section of the block.
     -   `vs-writer.insertTemplate`: Inserts a new empty block structure.
+    -   `vs-writer.removePSections`: Recursively removes P sections (keeps A).
+    -   `vs-writer.removeASections`: Recursively removes A sections (keeps P).
+    -   `vs-writer.hidePSections`: Recursively hides P sections (toggles comments).
+    -   `vs-writer.hideASections`: Recursively hides A sections (toggles comments).
 
 ### Data Flow
 1.  **Activation**: Extension activates `onLanguage:markdown`.
@@ -35,6 +39,10 @@ This document outlines the architecture, workflows, and conventions for the **VS
 
 ### Key Commands
 -   `VS Writer: Insert Block Template`: Helper to insert the DSL tags.
+-   `VS Writer: Remove P-Sections`: Bulk delete human drafts (Explorer Context Menu).
+-   `VS Writer: Remove A-Sections`: Bulk delete AI output (Explorer Context Menu).
+-   `VS Writer: Hide P-Sections`: Bulk hide human drafts (Explorer Context Menu).
+-   `VS Writer: Hide A-Sections`: Bulk hide AI output (Explorer Context Menu).
 
 ## 🧩 Patterns & Conventions
 
