@@ -47,6 +47,28 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
 
+        // Check for AI-WRITER-CONTEXT.md in the workspace root (Append)
+        if (rootPath) {
+            const contextFilePath = path.join(rootPath, 'AI-WRITER-CONTEXT.md');
+            
+            if (fs.existsSync(contextFilePath)) {
+                try {
+                    const contextContent = processContextFile(contextFilePath, rootPath);
+                    if (contextContent.trim()) {
+                        systemPrompt += `\n\n**Additional Context:**\n${contextContent}`;
+                        stream.markdown(`*Loaded custom context from AI-WRITER-CONTEXT.md*\n\n`);
+                    }
+                } catch (err) {
+                    if (err instanceof Error) {
+                        stream.markdown(`Error processing AI-WRITER-CONTEXT.md: ${err.message}`);
+                    } else {
+                        stream.markdown(`Error processing AI-WRITER-CONTEXT.md`);
+                    }
+                    return; // Stop execution if context processing fails
+                }
+            }
+        }
+
         // Check for AI-WRITER-ROLE.md in the workspace root (Append)
         if (rootPath) {
             const roleFilePath = path.join(rootPath, 'AI-WRITER-ROLE.md');
@@ -242,6 +264,26 @@ function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
         }
     }
     return undefined;
+}
+
+function processContextFile(filePath: string, rootPath: string): string {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    // Match [text](link) but not ![text](link)
+    // Negative lookbehind for ! is (?<!!)
+    const linkRegex = /(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g;
+
+    return content.replace(linkRegex, (match, text, linkPath) => {
+        // Handle simple relative paths
+        // We use path.join to ensure we treat it as relative to root, even if it starts with /
+        const targetPath = path.join(rootPath, linkPath);
+        
+        if (!fs.existsSync(targetPath)) {
+            throw new Error(`Referenced file not found: ${linkPath}`);
+        }
+        
+        const fileContent = fs.readFileSync(targetPath, 'utf-8');
+        return `\n<context_file path="${linkPath}">\n${fileContent}\n</context_file>\n`;
+    });
 }
 
 export function deactivate() {}
