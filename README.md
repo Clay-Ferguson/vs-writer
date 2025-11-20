@@ -54,6 +54,48 @@ Keep sentences short and punchy.
 
 When this file exists, `@writer` will automatically read it and apply the persona to its generation.
 
+# Injecting Additional Context
+
+Sometimes you need the AI to be aware of specific information, data, or documents that are relevant to your writing but aren't part of the current file. You can achieve this using the `AI-WRITER-CONTEXT.md` file.
+
+1.  Create a file named `AI-WRITER-CONTEXT.md` in the root folder of your workspace.
+2.  Add Markdown links to the files you want to include as context.
+
+**Example `AI-WRITER-CONTEXT.md` content:**
+```markdown
+# Project Context
+
+Here are the magic numbers we are using for this project:
+[Magic Numbers](data/magic-numbers.txt)
+```
+
+**Example `data/magic-numbers.txt` content:**
+```text
+1, 3, 5
+```
+
+**How it works:**
+When you run `@writer`, the extension will:
+1.  Read `AI-WRITER-CONTEXT.md`.
+2.  Find the link `[Magic Numbers](data/magic-numbers.txt)`.
+3.  Read the actual content of `data/magic-numbers.txt`.
+4.  Inject that content directly into the system prompt so the AI can "see" it.
+
+**Verification Example:**
+You can verify this works by asking the AI to perform a task that requires knowledge of the external file.
+
+*Input:*
+```markdown
+<!-- p -->
+(AI, add up the magic numbers and print the sum.)
+<!-- a -->
+
+<!-- e -->
+```
+
+*Result:*
+The AI will correctly output `9`  (1 + 3 + 5) between the 'a' and 'e' section, proving it has read the context file.
+
 ## Overriding the System Prompt (Advanced)
 
 For complete control over the AI's behavior, you can override the entire system prompt. This is rarely needed but useful for power users who want to fundamentally change how the extension interprets the `p/a/e` blocks.
