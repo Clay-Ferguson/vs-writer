@@ -122,3 +122,16 @@ To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at
 
 *   Visual Studio Code 1.90.0 or higher.
 *   GitHub Copilot Chat extension installed and active.
+
+## Building from Source
+
+To build the distributable installer (`.vsix` file) and install it locally, you can use the provided `install.sh` script. This script will:
+
+1.  Install dependencies.
+2.  Compile the project.
+3.  Package the extension.
+4.  Install it into your VS Code instance.
+
+```bash
+./install.sh
+```
