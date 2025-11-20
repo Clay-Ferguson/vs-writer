@@ -31,8 +31,8 @@ VS Writer uses three specific HTML comment tags to structure your document:
     *   You can include specific instructions like `(ai, make this sound professional)` or `(ai, use a metaphor about space)`.
 4.  **Invoke the Writer**:
     *   Place your cursor anywhere inside the block.
-    *   Open the **Copilot Chat** view.
-    *   Type `@writer` (or `@writer /fill`) and hit Enter.
+    *   **Option A (Right-Click)**: Right-click in the editor and select **"VSWriter - Generate"**.
+    *   **Option B (Chat)**: Open the Copilot Chat view, type `@writer`, and hit Enter.
 5.  **Insert the Result**:
     *   The AI will generate the content in the chat window.
     *   Click the **"Insert into Document"** button that appears below the response to automatically fill the `<!-- a -->` section.
@@ -69,6 +69,7 @@ To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at
 
 *   `@writer`: Triggers the AI to process the current block.
 *   `VS Writer: Insert Block Template`: Inserts a new `p/a/e` block at the cursor position.
+*   `VSWriter - Generate`: (Context Menu) Opens Chat and invokes `@writer` for the current block.
 
 ## Requirements
 

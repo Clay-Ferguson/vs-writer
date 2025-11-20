@@ -146,6 +146,13 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
     );
+
+    // 4. Register Command to Generate (Trigger Chat)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.generate', () => {
+            vscode.commands.executeCommand('workbench.action.chat.open', { query: '@writer' });
+        })
+    );
 }
 
 function getExtensionPath(): string {

@@ -34,8 +34,21 @@
       {
         "command": "vs-writer.insertTemplate",
         "title": "Writer: Insert Block Template"
+      },
+      {
+        "command": "vs-writer.generate",
+        "title": "VSWriter - Generate"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vs-writer.generate",
+          "group": "1_modification",
+          "when": "editorTextFocus"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
