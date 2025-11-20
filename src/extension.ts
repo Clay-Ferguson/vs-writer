@@ -27,6 +27,26 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        // Check for AI-WRITER-ROLE.md in the workspace root
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            const rootPath = workspaceFolders[0].uri.fsPath;
+            const roleFilePath = path.join(rootPath, 'AI-WRITER-ROLE.md');
+            
+            if (fs.existsSync(roleFilePath)) {
+                try {
+                    const roleContent = fs.readFileSync(roleFilePath, 'utf-8');
+                    if (roleContent.trim()) {
+                        systemPrompt += `\n\n**Additional Role/Persona Instructions:**\n${roleContent}`;
+                        stream.markdown(`*Loaded custom role from AI-WRITER-ROLE.md*\n\n`);
+                    }
+                } catch (err) {
+                    console.error('Error reading role file:', err);
+                    stream.markdown(`*Warning: Found AI-WRITER-ROLE.md but could not read it.*\n\n`);
+                }
+            }
+        }
+
         // Determine the user content (from chat or editor)
         let userContent = request.prompt;
         let editorContext: WriterContext | undefined;

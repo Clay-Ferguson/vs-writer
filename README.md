@@ -37,6 +37,22 @@ VS Writer uses three specific HTML comment tags to structure your document:
     *   The AI will generate the content in the chat window.
     *   Click the **"Insert into Document"** button that appears below the response to automatically fill the `<!-- a -->` section.
 
+### 3. Customizing the AI Persona
+
+You can define a specific role or persona for the AI to adopt (e.g., "Physics Expert", "Noir Detective", "Technical Writer").
+
+1.  Create a file named `AI-WRITER-ROLE.md` in the root folder of your workspace.
+2.  Write your persona instructions in this file.
+
+**Example `AI-WRITER-ROLE.md` content:**
+```markdown
+You are a cynical, noir-style detective narrator.
+Everything you write should be gritty, dark, and full of metaphors about rain and shadows.
+Keep sentences short and punchy.
+```
+
+When this file exists, `@writer` will automatically read it and apply the persona to its generation.
+
 ## Example
 
 **Your Input (in Editor):**
