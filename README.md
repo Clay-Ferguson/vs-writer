@@ -4,23 +4,24 @@
 
 Instead of switching back and forth between a chat window and your document, VS Writer lets you define **Draft** sections and **AI** sections right in the text, creating a seamless "Human Draft -> AI Polish" loop.
 
-## Key Features
+![chat-window](img/chat-window.png)
+
+# Key Features
 
 *   **Structured Collaboration**: Use simple HTML comments to define where you write and where the AI writes.
 *   **Context-Aware**: The `@writer` agent automatically reads the block of text your cursor is currently inside.
 *   **Zero-Friction Workflow**: No need to copy-paste prompts. Just type `@writer` in the chat, and the extension handles the rest.
 *   **Meta-Instructions**: Embed instructions for the AI directly in your draft using `(ai, ...)` syntax.
 
-## How to Use
+# The Syntax
 
-### 1. The Syntax
 VS Writer uses three specific HTML comment tags to structure your document:
 
 *   `<!-- p -->`: **Paragraph / Prompt**. This is where you write your rough draft, notes, or bullet points.
 *   `<!-- a -->`: **AI Output**. This is where the AI will generate the polished content.
 *   `<!-- e -->`: **End**. Marks the end of the collaborative block.
 
-### 2. The Workflow
+# The Workflow
 
 1.  **Open a Markdown file** in VS Code.
 2.  **Insert a Block**:
@@ -37,7 +38,7 @@ VS Writer uses three specific HTML comment tags to structure your document:
     *   The AI will generate the content in the chat window.
     *   Click the **"Insert into Document"** button that appears below the response to automatically fill the `<!-- a -->` section.
 
-### 3. Customizing the AI Persona
+# Customizing the AI Persona
 
 You can define a specific role or persona for the AI to adopt (e.g., "Physics Expert", "Noir Detective", "Technical Writer").
 
@@ -53,7 +54,7 @@ Keep sentences short and punchy.
 
 When this file exists, `@writer` will automatically read it and apply the persona to its generation.
 
-### 4. Overriding the System Prompt (Advanced)
+## Overriding the System Prompt (Advanced)
 
 For complete control over the AI's behavior, you can override the entire system prompt. This is rarely needed but useful for power users who want to fundamentally change how the extension interprets the `p/a/e` blocks.
 
@@ -84,7 +85,7 @@ The user will provide text that follows a specific structure using HTML comments
 -   Ensure the content flows logically from the human draft.
 ```
 
-## Example
+# Example
 
 **Your Input (in Editor):**
 
@@ -108,22 +109,51 @@ To illustrate this mechanism, consider the phenomenon of acoustic resonance. Ima
 <!-- e -->
 ```
 
-## Tips
+# Persona Examples
+
+## Noir Detective Persona
+
+If `AI-WRITER-ROLE.md` contains this:
+
+```
+You are a cynical, noir-style detective narrator. 
+Everything you write should be gritty, dark, and full of metaphors about rain and shadows.
+Keep sentences short and punchy.
+```
+
+You get this...
+
+![mystery-novel-author](img/mystery-novel-author.png)
+
+## Pirate Persona
+
+If `AI-WRITER-ROLE.md` contains this:
+
+```
+You are a pirate! Everything sentence you say sounds just like a pirate!
+```
+
+You get this...
+
+![pirate-author](img/pirate-author.png)
+
+
+# Tips
 
 To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at least in Rendered/Preview Markdown) you can simply change `<!-- p -->` to `<!-- p -- >` for example. Notice all we need to do is add a space before the closing `>` and that has the effect of removing that (making it part of a comment), so that we can toggle any of these sections on and off using this technique.
 
-## Commands
+# Commands
 
 *   `@writer`: Triggers the AI to process the current block.
 *   `VS Writer: Insert Block Template`: Inserts a new `p/a/e` block at the cursor position.
 *   `VSWriter - Generate`: (Context Menu) Opens Chat and invokes `@writer` for the current block.
 
-## Requirements
+# Requirements
 
 *   Visual Studio Code 1.90.0 or higher.
 *   GitHub Copilot Chat extension installed and active.
 
-## Building from Source
+# Building from Source
 
 To build the distributable installer (`.vsix` file) and install it locally, you can use the provided `install.sh` script. This script will:
 
