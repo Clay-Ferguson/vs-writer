@@ -16,21 +16,39 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. Register the Chat Participant
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
         
-        // Load the system prompt
-        const promptPath = path.join(getExtensionPath(), 'out', 'prompts', 'writer-prompt.md');
+        // 1. Determine System Prompt
+        // Check for AI-WRITER-PROMPT.md in the workspace root (Override)
         let systemPrompt = '';
-        try {
-            systemPrompt = fs.readFileSync(promptPath, 'utf-8');
-        } catch (err) {
-            console.error('Error reading prompt file:', err);
-            stream.markdown('Error: Could not load system prompt.');
-            return;
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        let rootPath = '';
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            rootPath = workspaceFolders[0].uri.fsPath;
+            const customPromptPath = path.join(rootPath, 'AI-WRITER-PROMPT.md');
+            if (fs.existsSync(customPromptPath)) {
+                try {
+                    systemPrompt = fs.readFileSync(customPromptPath, 'utf-8');
+                    stream.markdown(`*Loaded custom system prompt from AI-WRITER-PROMPT.md*\n\n`);
+                } catch (err) {
+                    console.error('Error reading custom prompt file:', err);
+                    stream.markdown(`*Warning: Found AI-WRITER-PROMPT.md but could not read it. Falling back to default.*\n\n`);
+                }
+            }
         }
 
-        // Check for AI-WRITER-ROLE.md in the workspace root
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders && workspaceFolders.length > 0) {
-            const rootPath = workspaceFolders[0].uri.fsPath;
+        // If no custom prompt loaded, load the default
+        if (!systemPrompt) {
+            const promptPath = path.join(getExtensionPath(), 'out', 'prompts', 'writer-prompt.md');
+            try {
+                systemPrompt = fs.readFileSync(promptPath, 'utf-8');
+            } catch (err) {
+                console.error('Error reading prompt file:', err);
+                stream.markdown('Error: Could not load system prompt.');
+                return;
+            }
+        }
+
+        // Check for AI-WRITER-ROLE.md in the workspace root (Append)
+        if (rootPath) {
             const roleFilePath = path.join(rootPath, 'AI-WRITER-ROLE.md');
             
             if (fs.existsSync(roleFilePath)) {
