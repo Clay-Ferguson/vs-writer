@@ -13,11 +13,11 @@ Instead of switching back and forth between a chat window and your document, VS 
 *   **Zero-Friction Workflow**: No need to copy-paste prompts. Just type `@writer` in the chat, and the extension handles the rest.
 *   **Meta-Instructions**: Embed instructions for the AI directly in your draft using `(ai, ...)` syntax.
 
-# The Syntax
+# The Markdown `PAE Syntax`
 
 VS Writer uses three specific HTML comment tags to structure your document:
 
-*   `<!-- p -->`: **Paragraph / Prompt**. This is where you write your rough draft, notes, or bullet points.
+*   `<!-- p -->`: **Paragraph**. This is where you write your rough draft, notes, or bullet points.
 *   `<!-- a -->`: **AI Output**. This is where the AI will generate the polished content.
 *   `<!-- e -->`: **End**. Marks the end of the collaborative block.
 
