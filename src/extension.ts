@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // Determine the user content (from chat or editor)
-        // todo-0: This is the "prompt" text the user may have typed as being addressed to the chatparticipant so to use it in our approach
+        // todo-0: This is the "prompt" text the user may have typed as being addressed to the chat participant so to use it in our approach
         // we would need to wrap it in (ai. ) actually.
         let userContent = ""; // request.prompt;
         let editorContext: WriterContext | undefined;
@@ -174,32 +174,31 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            // We need to find the <!-- a --> tag within the range and insert after it
-            const textDoc = editor.document;
-            const blockText = textDoc.getText(range);
-
-            // Simple regex to find where to insert
-            // We look for <!-- a --> and insert after it
-            const aTagIndex = blockText.indexOf('<!-- a -->');
-            if (aTagIndex !== -1) {
-                const insertOffset = textDoc.offsetAt(range.start) + aTagIndex + '<!-- a -->'.length;
-                const insertPos = textDoc.positionAt(insertOffset);
-
-                await editor.edit(editBuilder => {
-                    // Optional: Clear existing content in 'a' section if it exists?
-                    // For now, let's just insert/append.
-                    // Actually, the prompt says "overwrite". 
-                    // Let's try to find if there is content between <a> and <e>
-                    const eTagIndex = blockText.indexOf('<!-- e -->');
-                    if (eTagIndex !== -1 && eTagIndex > aTagIndex) {
-                        const startReplace = insertPos;
-                        const endReplace = textDoc.positionAt(textDoc.offsetAt(range.start) + eTagIndex);
-                        const replaceRange = new vscode.Range(startReplace, endReplace);
-                        editBuilder.replace(replaceRange, '\n' + text + '\n');
-                    } else {
-                        editBuilder.insert(insertPos, '\n' + text + '\n');
+            // Re-find the block based on the start position. 
+            // This handles cases where the block content has changed (e.g. expanded) since the request was made.
+            const context = findWriterBlock(editor, range.start);
+            
+            if (context) {
+                const { fullBlock, range: currentRange } = context;
+                
+                // Replace the content between <!-- a --> and <!-- e -->
+                // We use a function replacer to avoid issues with special characters in 'text'
+                const newBlockContent = fullBlock.replace(
+                    /(<!--\s*a\s*-->)([^]*?)(<!--\s*e\s*-->)/, 
+                    (match, startTag, content, endTag) => {
+                        return startTag + '\n' + text + '\n' + endTag;
                     }
-                });
+                );
+                
+                if (newBlockContent !== fullBlock) {
+                    await editor.edit(editBuilder => {
+                        editBuilder.replace(currentRange, newBlockContent);
+                    });
+                }
+            } else {
+                // Fallback: If we can't find the block, try to insert at the cursor or warn
+                vscode.window.showWarningMessage('Could not locate the Writer block. Content inserted at cursor.');
+                editor.edit(b => b.insert(editor.selection.active, text));
             }
         })
     );
@@ -384,9 +383,10 @@ function getExtensionPath(): string {
     return path.resolve(__dirname, '..');
 }
 
-function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
+function findWriterBlock(editor: vscode.TextEditor, position?: vscode.Position): WriterContext | undefined {
     const text = editor.document.getText();
-    const cursorOffset = editor.document.offsetAt(editor.selection.active);
+    const pos = position || editor.selection.active;
+    const cursorOffset = editor.document.offsetAt(pos);
 
     // Regex to find blocks: <!-- p --> ... <!-- e -->
     // We use [^]*? to match across newlines non-greedily
