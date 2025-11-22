@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 1. Register the Chat Participant
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
-        
+
         // 1. Determine System Prompt
         // Check for AI-WRITER-PROMPT.md in the workspace root (Override)
         let systemPrompt = '';
@@ -50,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Check for AI-WRITER-CONTEXT.md in the workspace root (Append)
         if (rootPath) {
             const contextFilePath = path.join(rootPath, 'AI-WRITER-CONTEXT.md');
-            
+
             if (fs.existsSync(contextFilePath)) {
                 try {
                     const contextContent = processContextFile(contextFilePath, rootPath);
@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Check for AI-WRITER-ROLE.md in the workspace root (Append)
         if (rootPath) {
             const roleFilePath = path.join(rootPath, 'AI-WRITER-ROLE.md');
-            
+
             if (fs.existsSync(roleFilePath)) {
                 try {
                     const roleContent = fs.readFileSync(roleFilePath, 'utf-8');
@@ -88,7 +88,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // Determine the user content (from chat or editor)
-        let userContent = request.prompt;
+        // todo-0: This is the "prompt" text the user may have typed as being addressed to the chatparticipant so to use it in our approach
+        // we would need to wrap it in (ai. ) actually.
+        let userContent = ""; // request.prompt;
         let editorContext: WriterContext | undefined;
 
         // If the user didn't type much, or explicitly asked to read the file, check the editor
@@ -97,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
             editorContext = findWriterBlock(editor);
             if (editorContext) {
                 // If we found a block, we append it to the user's prompt (or use it as the prompt)
-                userContent = `${userContent}\n\nHere is the context from the editor:\n${editorContext.pContent}`;
+                userContent = `${userContent}\n${editorContext.pContent}`;
                 stream.markdown(`*Processing block at line ${editorContext.range.start.line + 1}...*\n\n`);
             }
         }
@@ -107,20 +109,28 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Construct the messages
+        const prompt = systemPrompt + "\n<content>\n" + userContent + "\n</content>\n";
+
+        console.log('Final Prompt Sent to LM:', prompt);
+
+        // Construct the messages with system prompt properly integrated
+        // The VS Code LM API doesn't have a separate "system" role, so we structure
+        // the conversation with system instructions in the chat history
         const messages = [
-            vscode.LanguageModelChatMessage.User(systemPrompt),
-            vscode.LanguageModelChatMessage.User(userContent)
+            vscode.LanguageModelChatMessage.User(prompt)
+            // vscode.LanguageModelChatMessage.User(systemPrompt),
+            // vscode.LanguageModelChatMessage.Assistant('I understand. I will follow these instructions for all subsequent requests.'),
+            // vscode.LanguageModelChatMessage.User(userContent)
         ];
 
         // Send to Copilot (using the 'gpt-4' family if available, or default)
         // Note: 'copilot-gpt-4' is a common model ID, but we should query available models or use the default.
         // For simplicity in this sample, we'll try to find a suitable model.
-        
+
         try {
             const models = await vscode.lm.selectChatModels({ family: 'gpt-4' });
             const model = models[0] || (await vscode.lm.selectChatModels({}))[0];
-            
+
             if (!model) {
                 stream.markdown('Error: No Language Model available.');
                 return;
@@ -167,14 +177,14 @@ export function activate(context: vscode.ExtensionContext) {
             // We need to find the <!-- a --> tag within the range and insert after it
             const textDoc = editor.document;
             const blockText = textDoc.getText(range);
-            
+
             // Simple regex to find where to insert
             // We look for <!-- a --> and insert after it
             const aTagIndex = blockText.indexOf('<!-- a -->');
             if (aTagIndex !== -1) {
                 const insertOffset = textDoc.offsetAt(range.start) + aTagIndex + '<!-- a -->'.length;
                 const insertPos = textDoc.positionAt(insertOffset);
-                
+
                 await editor.edit(editBuilder => {
                     // Optional: Clear existing content in 'a' section if it exists?
                     // For now, let's just insert/append.
@@ -247,7 +257,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const replacement = `<!-- p -->\n${selectedText}\n<!-- a -->\n<!-- e -->`;
-            
+
             await editor.edit(editBuilder => {
                 editBuilder.replace(selection, replacement);
             });
@@ -260,7 +270,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function hideSections(type: 'P' | 'A') {
     const action = type === 'P' ? 'Hide Human (P)' : 'Hide AI (A)';
-    
+
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: `${action} sections...`,
@@ -268,7 +278,7 @@ async function hideSections(type: 'P' | 'A') {
     }, async (progress) => {
         const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
         let processedCount = 0;
-        
+
         for (const file of files) {
             try {
                 const document = await vscode.workspace.openTextDocument(file);
@@ -309,7 +319,7 @@ async function hideSections(type: 'P' | 'A') {
 async function removeSections(type: 'P' | 'A') {
     const action = type === 'P' ? 'Human (P)' : 'AI (A)';
     const keep = type === 'P' ? 'AI (A)' : 'Human (P)';
-    
+
     const result = await vscode.window.showErrorMessage(
         `Are you sure you want to remove all ${action} content? This will keep only the ${keep} content and remove the markers. This cannot be undone.`,
         { modal: true },
@@ -321,7 +331,7 @@ async function removeSections(type: 'P' | 'A') {
     }
 
     const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
-    
+
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: `Removing ${action} sections...`,
@@ -332,16 +342,16 @@ async function removeSections(type: 'P' | 'A') {
             try {
                 const document = await vscode.workspace.openTextDocument(file);
                 const text = document.getText();
-                
+
                 // Regex to find blocks: <!-- p --> ... <!-- a --> ... <!-- e -->
                 const regex = /<!--\s*p\s*-->([^]*?)<!--\s*a\s*-->([^]*?)<!--\s*e\s*-->/g;
-                
+
                 let hasChanges = false;
                 const newText = text.replace(regex, (match, pContent, aContent) => {
                     hasChanges = true;
                     if (type === 'P') {
                         // Remove P, keep A
-                        return aContent; 
+                        return aContent;
                     } else {
                         // Remove A, keep P
                         return pContent;
@@ -371,7 +381,7 @@ function getExtensionPath(): string {
     // This is a hacky way to get the extension path in development if context is not passed everywhere
     // But we passed context to activate. 
     // Actually, we can just use __dirname since we are in 'out'
-    return path.resolve(__dirname, '..'); 
+    return path.resolve(__dirname, '..');
 }
 
 function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
@@ -381,7 +391,7 @@ function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
     // Regex to find blocks: <!-- p --> ... <!-- e -->
     // We use [^]*? to match across newlines non-greedily
     const regex = /<!--\s*p\s*-->([^]*?)<!--\s*e\s*-->/g;
-    
+
     let match;
     while ((match = regex.exec(text)) !== null) {
         const start = match.index;
@@ -399,10 +409,10 @@ function findWriterBlock(editor: vscode.TextEditor): WriterContext | undefined {
                 const pTagMatch = /^<!--\s*p\s*-->/.exec(fullBlock);
                 if (pTagMatch) {
                     const pContent = fullBlock.substring(
-                        pTagMatch[0].length, 
+                        pTagMatch[0].length,
                         aTagMatch.index
                     );
-                    
+
                     return {
                         pContent: pContent.trim(),
                         fullBlock,
@@ -428,14 +438,14 @@ function processContextFile(filePath: string, rootPath: string): string {
         // Handle simple relative paths
         // We use path.join to ensure we treat it as relative to root, even if it starts with /
         const targetPath = path.join(rootPath, linkPath);
-        
+
         if (!fs.existsSync(targetPath)) {
             throw new Error(`Referenced file not found: ${linkPath}`);
         }
-        
+
         const fileContent = fs.readFileSync(targetPath, 'utf-8');
         return `\n<context_file path="${linkPath}">\n${fileContent}\n</context_file>\n`;
     });
 }
 
-export function deactivate() {}
+export function deactivate() { }
