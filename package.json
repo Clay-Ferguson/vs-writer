@@ -37,11 +37,13 @@
       },
       {
         "command": "vs-writer.createPAESection",
-        "title": "VSWriter: Create P-A-E Section"
+        "title": "Create P-A-E Section",
+        "category": "VS Writer"
       },
       {
         "command": "vs-writer.generate",
-        "title": "VSWriter - Generate"
+        "title": "Generate",
+        "category": "VS Writer"
       },
       {
         "command": "vs-writer.removePSections",
@@ -69,13 +71,8 @@
     "menus": {
       "editor/context": [
         {
-          "command": "vs-writer.generate",
-          "group": "1_modification@1",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "vs-writer.createPAESection",
-          "group": "1_modification@2",
+          "submenu": "vs-writer.submenu",
+          "group": "1_modification",
           "when": "editorTextFocus"
         }
       ],
@@ -87,20 +84,34 @@
       ],
       "vs-writer.submenu": [
         {
+          "command": "vs-writer.generate",
+          "group": "1_modification@1",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "vs-writer.createPAESection",
+          "group": "1_modification@2",
+          "when": "editorTextFocus"
+        },
+        {
           "command": "vs-writer.removePSections",
-          "group": "1_remove"
+          "group": "2_remove",
+          "when": "!editorTextFocus"
         },
         {
           "command": "vs-writer.removeASections",
-          "group": "1_remove"
+          "group": "2_remove",
+          "when": "!editorTextFocus"
         },
         {
           "command": "vs-writer.hidePSections",
-          "group": "2_hide"
+          "group": "3_hide",
+          "when": "!editorTextFocus"
         },
         {
           "command": "vs-writer.hideASections",
-          "group": "2_hide"
+          "group": "3_hide",
+          "when": "!editorTextFocus"
         }
       ]
     }
