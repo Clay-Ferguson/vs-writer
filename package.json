@@ -36,6 +36,10 @@
         "title": "Writer: Insert Block Template"
       },
       {
+        "command": "vs-writer.createPAESection",
+        "title": "VSWriter: Create P-A-E Section"
+      },
+      {
         "command": "vs-writer.generate",
         "title": "VSWriter - Generate"
       },
@@ -66,7 +70,12 @@
       "editor/context": [
         {
           "command": "vs-writer.generate",
-          "group": "1_modification",
+          "group": "1_modification@1",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "vs-writer.createPAESection",
+          "group": "1_modification@2",
           "when": "editorTextFocus"
         }
       ],

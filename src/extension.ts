@@ -229,6 +229,33 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.hideASections', () => hideSections('A'))
     );
+
+    // 7. Register Command to Create P-A-E Section from Selection
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.createPAESection', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+
+            const selection = editor.selection;
+            const selectedText = editor.document.getText(selection);
+
+            if (!selectedText.trim()) {
+                vscode.window.showInformationMessage('Please select some text to convert.');
+                return;
+            }
+
+            const replacement = `<!-- p -->\n${selectedText}\n<!-- a -->\n<!-- e -->`;
+            
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, replacement);
+            });
+
+            // Trigger generation immediately
+            vscode.commands.executeCommand('vs-writer.generate');
+        })
+    );
 }
 
 async function hideSections(type: 'P' | 'A') {
