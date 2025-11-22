@@ -4,6 +4,10 @@
   "description": "Collaborative AI writing assistant using HTML comment syntax",
   "version": "0.0.1",
   "publisher": "Clay-Ferguson",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Clay-Ferguson/vs-writer"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
