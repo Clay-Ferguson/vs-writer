@@ -17,7 +17,6 @@ This document outlines the architecture, workflows, and conventions for the **VS
     -   `vs-writer.removeASections`: Recursively removes A sections (keeps P).
     -   `vs-writer.hidePSections`: Recursively hides P sections (toggles comments).
     -   `vs-writer.hideASections`: Recursively hides A sections (toggles comments).
-    -   `vs-writer.createPAESection`: Wraps selected text in a P-A-E block and triggers generation.
 
 ### Data Flow
 1.  **Activation**: Extension activates `onLanguage:markdown`.
@@ -40,7 +39,6 @@ This document outlines the architecture, workflows, and conventions for the **VS
 
 ### Key Commands
 -   `VS Writer: Insert Block Template`: Helper to insert the DSL tags.
--   `VSWriter: Create P-A-E Section`: Wraps selected text in a P-A-E block and triggers generation (Editor Context Menu).
 -   `VS Writer: Remove P-Sections`: Bulk delete human drafts (Explorer Context Menu).
 -   `VS Writer: Remove A-Sections`: Bulk delete AI output (Explorer Context Menu).
 -   `VS Writer: Hide P-Sections`: Bulk hide human drafts (Explorer Context Menu).

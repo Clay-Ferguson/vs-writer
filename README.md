@@ -52,7 +52,7 @@ You can also convert existing text into a P-A-E section and generate the AI resp
 
 1.  Select the text you want to use as your draft (the `<!-- p -->` content).
 2.  Right-click the selection.
-3.  Choose **"VSWriter: Create P-A-E Section"**.
+3.  Choose **"VSWriter - Generate"**.
 
 This will wrap your selection in the P-A-E tags and immediately trigger the AI generation process.
 
@@ -160,7 +160,6 @@ To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at
 
 *   `@writer`: Triggers the AI to process the current block.
 *   `VS Writer: Insert Block Template`: Inserts a new `p/a/e` block at the cursor position.
-*   `VSWriter: Create P-A-E Section`: (Context Menu) Wraps selected text in a P-A-E block and triggers generation.
 *   `VSWriter - Generate`: (Context Menu) Opens Chat and invokes `@writer` for the current block.
 
 # Project Management (Explorer Context Menu)

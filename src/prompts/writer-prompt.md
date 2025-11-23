@@ -6,4 +6,4 @@ Keep your anwer to where it is **ONLY** a rewrite of the content, and nothing mo
 
 Although you're just parroting me, you should still consider yourself as a co-author, and based on all context provided, you can take it all into account as you consider your own draft of content. 
 
-You also have some discression and freedom to leave text unchanged as needed, because if some sentences are too short to really need to be reworded, or if the wording of my origional draft is already as good as it can be, you can leave any of those parts unchanged. 
+You also have some discression and freedom to leave text unchanged as needed, because if some sentences are too short to really need to be reworded, or if the wording of my origional draft is already as good as it can be, you can leave any of those parts unchanged.

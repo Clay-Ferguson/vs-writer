@@ -88,28 +88,50 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // Determine the user content (from chat or editor)
-        // todo-0: This is the "prompt" text the user may have typed as being addressed to the chat participant so to use it in our approach
-        // we would need to wrap it in (ai. ) actually.
-        let userContent = ""; // request.prompt;
+        let promptContent = ""; 
         let editorContext: WriterContext | undefined;
 
         // If the user didn't type much, or explicitly asked to read the file, check the editor
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             editorContext = findWriterBlock(editor);
+
+            // If no block found, check if we can create one from selection
+            if (!editorContext) {
+                const selection = editor.selection;
+                const selectedText = editor.document.getText(selection);
+
+                if (selectedText.trim()) {
+                    const replacement = `<!-- p -->\n${selectedText}\n<!-- a -->\n<!-- e -->`;
+
+                    await editor.edit(editBuilder => {
+                        editBuilder.replace(selection, replacement);
+                    });
+
+                    // Re-scan for the block (it should be where the cursor is now)
+                    editorContext = findWriterBlock(editor);
+                }
+            }
+
             if (editorContext) {
                 // If we found a block, we append it to the user's prompt (or use it as the prompt)
-                userContent = `${userContent}\n${editorContext.pContent}`;
+                promptContent = `${promptContent}\n${editorContext.pContent}`;
                 stream.markdown(`*Processing block at line ${editorContext.range.start.line + 1}...*\n\n`);
             }
         }
 
-        if (!userContent.trim()) {
+        if (!promptContent.trim()) {
             stream.markdown('Please provide a prompt or place your cursor inside a `<!-- p --> ... <!-- e -->` block.');
             return;
         }
 
-        const prompt = systemPrompt + "\n<content>\n" + userContent + "\n</content>\n";
+        let prompt = systemPrompt;
+
+        // If the user entered something in the chat window as a chat message to the '@writer' participant, we can include that as well
+        if (request.prompt && request.prompt.trim()) {
+            prompt += `\nHere is some initial meta-prompt text for you to consider which the user included to help you with your draft:\n<meta-prompt>${request.prompt.trim()}</meta-prompt>\n`;
+        }
+        prompt += "\n<content>\n" + promptContent + "\n</content>\n";
 
         console.log('Final Prompt Sent to LM:', prompt);
 
@@ -237,33 +259,6 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.hideASections', () => hideSections('A'))
-    );
-
-    // 7. Register Command to Create P-A-E Section from Selection
-    context.subscriptions.push(
-        vscode.commands.registerCommand('vs-writer.createPAESection', async () => {
-            const editor = vscode.window.activeTextEditor;
-            if (!editor) {
-                return;
-            }
-
-            const selection = editor.selection;
-            const selectedText = editor.document.getText(selection);
-
-            if (!selectedText.trim()) {
-                vscode.window.showInformationMessage('Please select some text to convert.');
-                return;
-            }
-
-            const replacement = `<!-- p -->\n${selectedText}\n<!-- a -->\n<!-- e -->`;
-
-            await editor.edit(editBuilder => {
-                editBuilder.replace(selection, replacement);
-            });
-
-            // Trigger generation immediately
-            vscode.commands.executeCommand('vs-writer.generate');
-        })
     );
 }
 
