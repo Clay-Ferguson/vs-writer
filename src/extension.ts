@@ -16,6 +16,12 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. Register the Chat Participant
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
 
+        // Handle /verify command
+        if (request.command === 'verify') {
+            await handleVerifyCommand(stream, token);
+            return;
+        }
+
         // 1. Determine System Prompt
         // Check for AI-WRITER-PROMPT.md in the workspace root (Override)
         let systemPrompt = '';
@@ -245,7 +251,14 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 5. Register Commands to Remove Sections
+    // 5. Register Command to Verify
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.verify', () => {
+            vscode.commands.executeCommand('workbench.action.chat.open', { query: '@writer /verify' });
+        })
+    );
+
+    // 6. Register Commands to Remove Sections
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.removePSections', () => removeSections('P'))
     );
@@ -253,13 +266,56 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('vs-writer.removeASections', () => removeSections('A'))
     );
 
-    // 6. Register Commands to Hide Sections
+    // 7. Register Commands to Hide Sections
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.hidePSections', () => hideSections('P'))
     );
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.hideASections', () => hideSections('A'))
     );
+}
+
+async function handleVerifyCommand(stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        stream.markdown('Please open a file to verify.');
+        return;
+    }
+
+    const editorContext = findWriterBlock(editor);
+    if (!editorContext) {
+        stream.markdown('Please place your cursor inside a `<!-- p --> ... <!-- e -->` block to verify.');
+        return;
+    }
+
+    const verifyPrompt = `
+You are a verification assistant. Your task is to compare the "P" (Paragraph/Draft) section and the "A" (AI Generated) section in the provided text block.
+Check if any important details, concepts, items, statements, or facts present in the "P" section were omitted from the "A" section.
+
+If the "A" section contains all relevant information from the "P" section, simply state: "A section is complete. No missing details were found."
+Otherwise, provide a bulleted list of the missing details.
+
+Here is the content to verify:
+${editorContext.fullBlock}
+`;
+    const messages = [vscode.LanguageModelChatMessage.User(verifyPrompt)];
+
+    try {
+        const models = await vscode.lm.selectChatModels({ family: 'gpt-4' });
+        const model = models[0] || (await vscode.lm.selectChatModels({}))[0];
+        if (!model) {
+            stream.markdown('Error: No Language Model available.');
+            return;
+        }
+        const chatResponse = await model.sendRequest(messages, {}, token);
+        for await (const fragment of chatResponse.text) {
+            stream.markdown(fragment);
+        }
+    } catch (err) {
+        if (err instanceof Error) {
+            stream.markdown(`Error: ${err.message}`);
+        }
+    }
 }
 
 async function hideSections(type: 'P' | 'A') {

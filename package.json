@@ -30,6 +30,10 @@
           {
             "name": "fill",
             "description": "Fill the current AI section based on the preceding paragraph."
+          },
+          {
+            "name": "verify",
+            "description": "Verify that the AI section contains all key details from the P section."
           }
         ]
       }
@@ -42,6 +46,11 @@
       {
         "command": "vs-writer.generate",
         "title": "Generate",
+        "category": "VS Writer"
+      },
+      {
+        "command": "vs-writer.verify",
+        "title": "Verify",
         "category": "VS Writer"
       },
       {
@@ -85,6 +94,11 @@
         {
           "command": "vs-writer.generate",
           "group": "1_modification@1",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "vs-writer.verify",
+          "group": "1_modification@2",
           "when": "editorTextFocus"
         },
         {

@@ -56,6 +56,16 @@ You can also convert existing text into a P-A-E section and generate the AI resp
 
 This will wrap your selection in the P-A-E tags and immediately trigger the AI generation process.
 
+# Verification
+
+You can verify that the AI-generated content (A-Section) contains all the important details from your draft (P-Section).
+
+1.  Place your cursor inside a P-A-E block.
+2.  **Option A (Right-Click)**: Right-click in the editor and select **"VSWriter - Verify"**.
+3.  **Option B (Chat)**: Open the Copilot Chat view, type `@writer /verify`, and hit Enter.
+
+The AI will compare the two sections and either confirm that the A-Section is complete or provide a bulleted list of any missing details.
+
 # Customizing the AI Persona
 
 You can define a specific role or persona for the AI to adopt (e.g., "Physics Expert", "Noir Detective", "Technical Writer").
@@ -161,6 +171,7 @@ To disable either the "p" (Paragraph) part or the "e" part from the Markdown (at
 *   `@writer`: Triggers the AI to process the current block.
 *   `VS Writer: Insert Block Template`: Inserts a new `p/a/e` block at the cursor position.
 *   `VSWriter - Generate`: (Context Menu) Opens Chat and invokes `@writer` for the current block.
+*   `VSWriter - Verify`: (Context Menu) Opens Chat and invokes `@writer /verify` to check for missing details.
 
 # Project Management (Explorer Context Menu)
 
