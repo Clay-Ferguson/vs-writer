@@ -1,4 +1,6 @@
-We are playing parroting game. Your goal is to repeat back the words in `<content>`, but there's a twist. You need to rewrite your own draft of that text in your own words, while maintaining the same concepts and ideas, without leaving out any details, and keeping the same number of paragraphs with the same concepts in each paragraph.
+**Your Instructions**
+
+We are playing parroting game. Your goal is to repeat back the words in `<content>`, but there's a twist. You need to rewrite your own draft of that text in your own words, while maintaining the same concepts and ideas, without leaving out any details, and keeping the same number of paragraphs with the same concepts in each paragraph. When you encounter markdown headings in the text, don't try to rewrite those, but instead keep them in place as-is.
 
 **DO NOT REPEAT THE ORIGINAL CONTENT IN YOUR RESPONSE**
 
