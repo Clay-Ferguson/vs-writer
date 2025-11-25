@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ws_exists, ws_read_file, ws_write_file } from './ws-file-util';
 
 const PARTICIPANT_ID = 'vs-writer.writer';
 
@@ -30,9 +31,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (workspaceFolders && workspaceFolders.length > 0) {
             rootPath = workspaceFolders[0].uri.fsPath;
             const customPromptPath = path.join(rootPath, 'AI-WRITER-PROMPT.md');
-            if (fs.existsSync(customPromptPath)) {
+            if (await ws_exists(customPromptPath)) {
                 try {
-                    systemPrompt = fs.readFileSync(customPromptPath, 'utf-8');
+                    systemPrompt = await ws_read_file(customPromptPath);
                     stream.markdown(`*Loaded custom system prompt from AI-WRITER-PROMPT.md*\n\n`);
                 } catch (err) {
                     console.error('Error reading custom prompt file:', err);
@@ -57,9 +58,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (rootPath) {
             const contextFilePath = path.join(rootPath, 'AI-WRITER-CONTEXT.md');
 
-            if (fs.existsSync(contextFilePath)) {
+            if (await ws_exists(contextFilePath)) {
                 try {
-                    const contextContent = processContextFile(contextFilePath, rootPath);
+                    const contextContent = await processContextFile(contextFilePath, rootPath);
                     if (contextContent.trim()) {
                         systemPrompt += `\n\n**Additional Context:**\n${contextContent}`;
                         stream.markdown(`*Loaded custom context from AI-WRITER-CONTEXT.md*\n\n`);
@@ -79,9 +80,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (rootPath) {
             const roleFilePath = path.join(rootPath, 'AI-WRITER-ROLE.md');
 
-            if (fs.existsSync(roleFilePath)) {
+            if (await ws_exists(roleFilePath)) {
                 try {
-                    const roleContent = fs.readFileSync(roleFilePath, 'utf-8');
+                    const roleContent = await ws_read_file(roleFilePath);
                     if (roleContent.trim()) {
                         systemPrompt += `\n\n**Additional Role/Persona Instructions:**\n${roleContent}`;
                         stream.markdown(`*Loaded custom role from AI-WRITER-ROLE.md*\n\n`);
@@ -484,24 +485,33 @@ function findWriterBlock(editor: vscode.TextEditor, position?: vscode.Position):
     return undefined;
 }
 
-function processContextFile(filePath: string, rootPath: string): string {
-    const content = fs.readFileSync(filePath, 'utf-8');
+async function processContextFile(filePath: string, rootPath: string): Promise<string> {
+    const content = await ws_read_file(filePath);
     // Match [text](link) but not ![text](link)
-    // Negative lookbehind for ! is (?<!!)
+    // Negative lookbehind for ! is (?<!\!)
     const linkRegex = /(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g;
 
-    return content.replace(linkRegex, (match, text, linkPath) => {
-        // Handle simple relative paths
-        // We use path.join to ensure we treat it as relative to root, even if it starts with /
+    // Collect all matches first since we need async operations
+    const matches: { fullMatch: string; linkPath: string; targetPath: string }[] = [];
+    let match;
+    while ((match = linkRegex.exec(content)) !== null) {
+        const linkPath = match[2];
         const targetPath = path.join(rootPath, linkPath);
+        matches.push({ fullMatch: match[0], linkPath, targetPath });
+    }
 
-        if (!fs.existsSync(targetPath)) {
-            throw new Error(`Referenced file not found: ${linkPath}`);
+    // Process all matches and build replacements
+    let result = content;
+    for (const m of matches) {
+        if (!await ws_exists(m.targetPath)) {
+            throw new Error(`Referenced file not found: ${m.linkPath}`);
         }
+        const fileContent = await ws_read_file(m.targetPath);
+        const replacement = `\n<context_file path="${m.linkPath}">\n${fileContent}\n</context_file>\n`;
+        result = result.replace(m.fullMatch, replacement);
+    }
 
-        const fileContent = fs.readFileSync(targetPath, 'utf-8');
-        return `\n<context_file path="${linkPath}">\n${fileContent}\n</context_file>\n`;
-    });
+    return result;
 }
 
 async function addFileToContext(uri: vscode.Uri) {
@@ -560,8 +570,8 @@ async function addFileToContext(uri: vscode.Uri) {
 
     // Check if context file exists
     let existingContent = '';
-    if (fs.existsSync(contextFilePath)) {
-        existingContent = fs.readFileSync(contextFilePath, 'utf-8');
+    if (await ws_exists(contextFilePath)) {
+        existingContent = await ws_read_file(contextFilePath);
         
         // Check if the link already exists (check for the path specifically)
         // We look for the path in parentheses to match markdown link format
@@ -582,7 +592,7 @@ async function addFileToContext(uri: vscode.Uri) {
 
     // Write the file
     try {
-        fs.writeFileSync(contextFilePath, newContent, 'utf-8');
+        await ws_write_file(contextFilePath, newContent);
         vscode.window.showInformationMessage(`Added to context: ${normalizedRelativePath}`);
     } catch (err) {
         vscode.window.showErrorMessage(`Failed to update AI-WRITER-CONTEXT.md: ${err}`);
