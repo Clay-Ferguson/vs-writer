@@ -273,6 +273,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('vs-writer.hideASections', () => hideSections('A'))
     );
+
+    // 8. Register Command to Add File to Context
+    context.subscriptions.push(
+        vscode.commands.registerCommand('vs-writer.addToContext', addFileToContext)
+    );
 }
 
 async function handleVerifyCommand(stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
@@ -497,6 +502,96 @@ function processContextFile(filePath: string, rootPath: string): string {
         const fileContent = fs.readFileSync(targetPath, 'utf-8');
         return `\n<context_file path="${linkPath}">\n${fileContent}\n</context_file>\n`;
     });
+}
+
+async function addFileToContext(uri: vscode.Uri) {
+    // Get the workspace root
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage('No workspace folder is open.');
+        return;
+    }
+    const rootPath = workspaceFolders[0].uri.fsPath;
+
+    // Check if a file was selected (uri comes from explorer context menu)
+    if (!uri) {
+        vscode.window.showErrorMessage('No file selected. Please right-click on a file in the Explorer.');
+        return;
+    }
+
+    // Check if it's a file (not a directory)
+    try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.type !== vscode.FileType.File) {
+            vscode.window.showErrorMessage('Please select a file, not a folder.');
+            return;
+        }
+    } catch (err) {
+        vscode.window.showErrorMessage('Could not access the selected item.');
+        return;
+    }
+
+    // Try to read the file to verify it's a text file
+    try {
+        const fileContent = await vscode.workspace.fs.readFile(uri);
+        // Try to decode as UTF-8 - this will work for text files
+        const decoder = new TextDecoder('utf-8', { fatal: true });
+        decoder.decode(fileContent);
+    } catch (err) {
+        vscode.window.showErrorMessage('The selected file does not appear to be a text file.');
+        return;
+    }
+
+    // Calculate the relative path from workspace root
+    const absolutePath = uri.fsPath;
+    const relativePath = path.relative(rootPath, absolutePath);
+
+    // Normalize path separators to forward slashes for Markdown links
+    const normalizedRelativePath = relativePath.split(path.sep).join('/');
+
+    // Generate the filename without extension for the link text
+    const fileName = path.basename(absolutePath, path.extname(absolutePath));
+
+    // Create the markdown link
+    const markdownLink = `[${fileName}](${normalizedRelativePath})`;
+
+    // Path to the context file
+    const contextFilePath = path.join(rootPath, 'AI-WRITER-CONTEXT.md');
+
+    // Check if context file exists
+    let existingContent = '';
+    if (fs.existsSync(contextFilePath)) {
+        existingContent = fs.readFileSync(contextFilePath, 'utf-8');
+        
+        // Check if the link already exists (check for the path specifically)
+        // We look for the path in parentheses to match markdown link format
+        if (existingContent.includes(`(${normalizedRelativePath})`)) {
+            vscode.window.showInformationMessage(`File is already in context: ${normalizedRelativePath}`);
+            // Open the context file in the editor
+            const contextFileUri = vscode.Uri.file(contextFilePath);
+            await vscode.window.showTextDocument(contextFileUri);
+            return;
+        }
+    } else {
+        // Create the file with a header
+        existingContent = '# Custom Context\n\n';
+    }
+
+    // Append the new link
+    const newContent = existingContent.trimEnd() + '\n' + markdownLink + '\n';
+
+    // Write the file
+    try {
+        fs.writeFileSync(contextFilePath, newContent, 'utf-8');
+        vscode.window.showInformationMessage(`Added to context: ${normalizedRelativePath}`);
+    } catch (err) {
+        vscode.window.showErrorMessage(`Failed to update AI-WRITER-CONTEXT.md: ${err}`);
+        return;
+    }
+
+    // Open the context file in the editor
+    const contextFileUri = vscode.Uri.file(contextFilePath);
+    await vscode.window.showTextDocument(contextFileUri);
 }
 
 export function deactivate() { }

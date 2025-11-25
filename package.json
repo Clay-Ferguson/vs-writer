@@ -68,6 +68,10 @@
       {
         "command": "vs-writer.hideASections",
         "title": "Hide A-Sections"
+      },
+      {
+        "command": "vs-writer.addToContext",
+        "title": "Add File To Context"
       }
     ],
     "submenus": [
@@ -119,6 +123,11 @@
         {
           "command": "vs-writer.hideASections",
           "group": "3_hide",
+          "when": "!editorTextFocus"
+        },
+        {
+          "command": "vs-writer.addToContext",
+          "group": "4_context",
           "when": "!editorTextFocus"
         }
       ]

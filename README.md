@@ -86,12 +86,23 @@ When this file exists, `@writer` will automatically read it and apply the person
 
 Sometimes you need the AI to be aware of specific information, data, or documents that are relevant to your writing but aren't part of the current file. You can achieve this using the `AI-WRITER-CONTEXT.md` file.
 
+## Quick Add via Explorer
+
+The easiest way to add a file to context is:
+
+1.  Right-click any text file in the Explorer.
+2.  Select **VS Writer > Add File To Context**.
+
+This will automatically create `AI-WRITER-CONTEXT.md` if it doesn't exist, add a Markdown link to the selected file, and open the context file in the editor so you can review or organize your context files.
+
+## Manual Setup
+
 1.  Create a file named `AI-WRITER-CONTEXT.md` in the root folder of your workspace.
 2.  Add Markdown links to the files you want to include as context.
 
 **Example `AI-WRITER-CONTEXT.md` content:**
 ```markdown
-# Project Context
+# Custom Context
 
 Here are the magic numbers we are using for this project:
 [Magic Numbers](data/magic-numbers.txt)
@@ -124,7 +135,7 @@ You can verify this works by asking the AI to perform a task that requires knowl
 *Result:*
 The AI will correctly output `9`  (1 + 3 + 5) between the 'a' and 'e' section, proving it has read the context file.
 
-## Overriding the System Prompt (Advanced)
+# Overriding the System Prompt (Advanced)
 
 For complete control over the AI's behavior, you can override the entire system prompt. This is rarely needed but useful for power users who want to fundamentally change how the extension interprets the `p/a/e` blocks.
 
@@ -181,6 +192,7 @@ VS Writer adds a "VS Writer" submenu to the Explorer context menu, allowing you 
 *   **Remove A-Sections**: Recursively removes all AI (A) sections and markers, keeping only the Human (P) content. **(Destructive)**
 *   **Hide P-Sections**: Hides all Human (P) sections by modifying the comment tags (e.g., `<!-- p -- >`), effectively commenting them out in the rendered Markdown. It also ensures A sections are visible.
 *   **Hide A-Sections**: Hides all AI (A) sections by modifying the comment tags (e.g., `<!-- a -- >`), effectively commenting them out in the rendered Markdown. It also ensures P sections are visible.
+*   **Add File To Context**: Adds the selected text file to `AI-WRITER-CONTEXT.md` as a Markdown link. Creates the context file if it doesn't exist. Opens the context file in the editor after adding.
 
 # Requirements
 

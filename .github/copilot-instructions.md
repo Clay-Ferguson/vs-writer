@@ -18,6 +18,7 @@ This document outlines the architecture, workflows, and conventions for the **VS
     -   `vs-writer.removeASections`: Recursively removes A sections (keeps P).
     -   `vs-writer.hidePSections`: Recursively hides P sections (toggles comments).
     -   `vs-writer.hideASections`: Recursively hides A sections (toggles comments).
+    -   `vs-writer.addToContext`: Adds a file to `AI-WRITER-CONTEXT.md` and opens the context file.
 
 ### Data Flow
 1.  **Activation**: Extension activates `onLanguage:markdown`.
@@ -45,6 +46,7 @@ This document outlines the architecture, workflows, and conventions for the **VS
 -   `VS Writer: Remove A-Sections`: Bulk delete AI output (Explorer Context Menu).
 -   `VS Writer: Hide P-Sections`: Bulk hide human drafts (Explorer Context Menu).
 -   `VS Writer: Hide A-Sections`: Bulk hide AI output (Explorer Context Menu).
+-   `VS Writer: Add File To Context`: Add a file to AI-WRITER-CONTEXT.md (Explorer Context Menu).
 
 ## 🧩 Patterns & Conventions
 
